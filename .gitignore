@@ -1,0 +1,38 @@
+# ---- Python / environments ----
+venv/
+.venv/
+venv_py310_backup/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# ---- Local secrets / config (copy the *.example.yaml files) ----
+config.yaml
+dubflow.yaml
+.env
+.env.*
+browser_profile/
+login_gemini.bat
+/login_gemini.bat
+
+# ---- Generated data (DubFlow pipeline) ----
+# Keep the folders in Git via .gitkeep, ignore everything generated inside.
+data/downloads/*
+data/intermediate/*
+data/output/*
+!data/downloads/.gitkeep
+!data/intermediate/.gitkeep
+!data/output/.gitkeep
+
+# ---- Legacy AutoDubVN generated files ----
+/downloads/
+/output/
+*.log
+*.bak*
+.cursor/
+
+# ---- Large media / local tools ----
+assets/nhac_nen/*.mp3
+assets/nhac_nen/*.flac
+assets/nhac_nen/*.wav
+tools/

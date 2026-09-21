@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AutoDubVN · By Crazyscholar</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div id="titlebar">
+  <div class="drag pywebview-drag-region">
+    <span class="window-caption">AutoDubVN</span>
+  </div>
+  <div class="wbtns" id="wbtns">
+    <button class="wbtn" title="Thu nhỏ" onclick="winCmd('min')">─</button>
+    <button class="wbtn" title="Phóng to" onclick="winCmd('max')">▢</button>
+    <button class="wbtn close" title="Đóng" onclick="winCmd('close')">✕</button>
+  </div>
+</div>
+
+<div id="top">
+  <div class="brand"><div class="brandmark" aria-hidden="true">ϟ</div><b>AutoDubVN</b>
+    <span id="ver">v2.5 AI Studio</span>
+    <span id="cuda"><i></i> đang kiểm tra</span></div>
+  <div id="modesw">
+    <button id="mDub" class="on" onclick="setMode('dub')"><span>▦</span> Lồng tiếng video</button>
+    <button id="mStory" onclick="setMode('story')"><span>▤</span> Video kể chuyện <em>AI Story</em></button>
+    <button id="mIdeas" onclick="setMode('ideas')"><span>◆</span> Kho ý tưởng <em>AI Plan</em></button>
+    <button id="mVideoTools" onclick="setMode('tools')"><span>✂</span> Công cụ Video <em>Phụ trợ</em></button>
+  </div>
+  <div class="spacer"></div>
+  <div class="selwrap dub-only">Hồ sơ
+    <select class="inp" id="profile">
+      <option>Phim Trung → Việt (mặc định)</option>
+      <option>Phim Anh → Việt</option>
+      <option>Thuyết minh 1 giọng</option>
+    </select>
+  </div>
+  <div class="top-chip dub-only" id="topGpu"><span>▧</span> GPU NVENC <i></i></div>
+  <div class="top-chip creator-chip"><i></i> By Crazyscholar</div>
+  <button class="btn settings-btn" onclick="openSettings()">⚙ Cài đặt</button>
+</div>
+
+<div id="main">
+  <!-- LEFT -->
+  <div id="left">
+    <div class="dub-source">
+      <div id="urlbox">
+        <textarea id="url" rows="2" placeholder="Dán link YouTube / Bilibili / Douyin… (mỗi dòng 1 link)"
+               onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addUrl()}"></textarea>
+        <button onclick="addUrl()">⇩ Tải về</button>
+      </div>
+      <button class="btn pick-local" onclick="pickFile()">▣ Chọn video từ máy tính</button>
+    </div>
+    <div class="lhead"><span>HÀNG ĐỢI XỬ LÝ</span><span id="qcount">0 mục</span><span id="dlcount" class="dl-badge" style="display:none">⇩ 0</span></div>
+    <div id="queue"></div>
+    <div class="lfoot">
+      <button class="btn" onclick="pickFile()">+ Thêm video vào hàng đợi</button>
+      <div style="display:flex;gap:6px">
+        <button class="btn sm" style="flex:1" onclick="clearDone()">Xoá đã xong</button>
+        <button class="btn sm" style="flex:1" onclick="saveProject()">Lưu danh sách</button>
+      </div>
+    </div>
+    <div id="bot">
+      <div class="run-actions">
+        <button class="btn pri" id="runbtn" onclick="runAll()">▶ CHẠY TẤT CẢ</button>
+        <button class="btn danger" onclick="cancelRun()">Huỷ</button>
+      </div>
+      <div id="pwrap">
+        <div id="ptext"><b id="pstep">Sẵn sàng</b><span id="pdetail"></span></div>
+        <div id="pbar"><i></i></div>
+      </div>
+      <div class="bottom-stats"><span class="stat"><i></i> <b id="ppct">0%</b></span>
+        <span class="stat">GPU <b id="gpu">—</b></span></div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div id="center">
+    <div id="tools">
+      <button class="btn on" onclick="addRegion('blur')">▭ Thêm vùng làm mờ</button>
+      <button class="btn" onclick="autoDetect()">✦ Tự dò sub cứng</button>
+      <button class="btn" onclick="addRegion('delogo')">✕ Xoá logo gốc</button>
+      <button class="btn" onclick="clearRegions()">Xoá tất cả vùng</button>
+      <button class="btn" onclick="setTab('cut')">✂ Cắt video</button>
+      <button class="btn" onclick="addLogoBox()">▤ Chèn logo</button>
+      <button class="btn" onclick="setTab('sub')">T Sửa phụ đề</button>
+      <label class="chk"><input type="checkbox" id="prev" checked onchange="draw()">
+        Xem trước hiệu ứng</label>
+    </div>
+
+    <div id="stage">
+      <div id="empty"><b>Chưa có video</b>Bấm "Chọn video" hoặc dán link phía trên</div>
+      <div id="vwrap" style="display:none">
+        <video id="video" preload="metadata"></video>
+        <div id="layers"></div>
+        <div id="playOverlay" onclick="togglePlay()" title="Phát / Tạm dừng"><span>▶</span></div>
+      </div>
+    </div>
+
+    <div id="scrub" onclick="seekBar(event)"><i></i><b></b></div>
+
+    <div id="transport">
+      <div class="tinfo">Frame <b id="fnum">—</b><br><b id="tcur">00:00:00</b> / <span id="tdur">00:00:00</span></div>
+      <div class="rgninfo" id="rgninfo">Chưa chọn vùng nào</div>
+      <div class="spacer"></div>
+      <button class="btn sm" onclick="jump(-5)">−5s</button>
+      <button class="btn sm" onclick="stepLine(-1)">◀ Dòng trước</button>
+      <button class="btn pri sm" id="play" onclick="togglePlay()" style="width:40px">▶</button>
+      <button class="btn sm" onclick="stepLine(1)">Dòng sau ▶</button>
+      <button class="btn sm" onclick="jump(5)">+5s</button>
+      <span class="stat">Thu phóng</span>
+      <input type="range" id="zoom" min="40" max="100" value="100" oninput="applyZoom()">
+    </div>
+
+    <div id="tracks">
+      <div class="trow"><div class="tlab">ĐOẠN GIỮ</div><div class="tline" id="trkCut"></div></div>
+      <div class="trow"><div class="tlab">SUB VIỆT</div><div class="tline" id="trkSub"></div></div>
+      <div class="trow"><div class="tlab">GIỌNG TTS</div><div class="tline" id="trkTts"></div></div>
+      <div class="trow"><div class="tlab">VÙNG MỜ</div><div class="tline" id="trkRgn"></div></div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div id="right">
+    <div id="tabs">
+      <button class="tab-item" data-t="blur" onclick="setTab('blur')"><span class="tab-icon">▭</span><span class="tab-label">Làm mờ</span></button>
+      <button class="tab-item on" data-t="sub" onclick="setTab('sub')"><span class="tab-icon">T</span><span class="tab-label">Phụ đề</span></button>
+      <button class="tab-item" data-t="logo" onclick="setTab('logo')"><span class="tab-icon">▤</span><span class="tab-label">Logo</span></button>
+      <button class="tab-item" data-t="cut" onclick="setTab('cut')"><span class="tab-icon">✂</span><span class="tab-label">Cắt video</span></button>
+      <button class="tab-item" data-t="asr" onclick="setTab('asr')"><span class="tab-icon">◎</span><span class="tab-label">Nhận dạng</span></button>
+      <button class="tab-item" data-t="tr" onclick="setTab('tr')"><span class="tab-icon">⇄</span><span class="tab-label">Dịch</span></button>
+      <button class="tab-item" data-t="tts" onclick="setTab('tts')"><span class="tab-icon">♬</span><span class="tab-label">Giọng đọc</span></button>
+      <button class="tab-item" data-t="export" onclick="setTab('export')"><span class="tab-icon">⇩</span><span class="tab-label">Xuất file</span></button>
+    </div>
+    <div id="panel"></div>
+  </div>
+</div>
+
+<!-- ============ CHẾ ĐỘ 2: VIDEO KỂ CHUYỆN ============ -->
+<div id="storyMain" style="display:none">
+<div id="sLeft">
+    <div class="story-scenes-head">
+      <div class="story-mode-toggle">
+        <button id="storyModeImg" class="btn sm on" onclick="storySetMediaMode('image')">🖼 Ảnh</button>
+        <button id="storyModeVid" class="btn sm" onclick="storySetMediaMode('video')">🎬 Video</button>
+        <span id="simgcount">0 ảnh</span>
+      </div>
+      <div class="story-scenes-actions" id="storyImageActions">
+        <button class="btn sm" onclick="storyAddImgs()">+ Thêm ảnh</button>
+        <button class="btn sm" onclick="storyAddFolder()">+ Thư mục</button>
+        <button class="btn sm" onclick="storyCreateImagePack()">✦ Prompt ảnh / Gemini</button>
+        <button class="btn sm danger" onclick="storyClearImgs()">Xoá hết</button>
+      </div>
+      <div class="story-scenes-actions" id="storyVideoActions" style="display:none">
+        <button class="btn sm" onclick="storyAddVideos()">+ Thêm video</button>
+        <button class="btn sm" onclick="storyAddVideoFolder()">+ Thư mục</button>
+        <button class="btn sm danger" onclick="storyClearVideos()">Xoá hết</button>
+      </div>
+    </div>
+    <div id="simgs"></div>
+    <div id="svideos" style="display:none"></div>
+  </div>
+  <div id="sCenter">
+    <div class="story-preview-head">
+      <div><span class="preview-icon">▦</span><b>Xem trước Video Kể Chuyện AI</b></div>
+      <div class="story-preview-badges"><span id="storySceneBadge">Cảnh 0/0</span><span id="storyAspectBadge">16:9</span></div>
+      <button class="btn pri sm" onclick="storyRunAll()">⇩ Xuất MP4</button>
+    </div>
+    <div id="sstageWrap"><div id="sstage"></div></div>
+    <div class="story-transport">
+      <button class="story-round" onclick="storySelectRelative(-1)" title="Cảnh trước">|◀</button>
+      <button class="story-play" onclick="storyTogglePreview()" title="Phát/tạm dừng">▶</button>
+      <button class="story-round" onclick="storySelectRelative(1)" title="Cảnh sau">▶|</button>
+      <b id="storyTime">00:00 / 00:00</b>
+      <span class="spacer"></span>
+      <span id="storyPreviewTitle">Video kể chuyện AI</span>
+    </div>
+    <div id="sinfo" class="hint" style="margin:0 12px 10px"></div>
+  </div>
+  <div id="sRight"><div id="spanel"></div></div>
+</div>
+
+<!-- ============ CHẾ ĐỘ 3: CÔNG CỤ VIDEO PHỤ TRỢ ============ -->
+<div id="videoToolsMain" style="display:none">
+  <div class="vt-shell">
+    <header class="vt-head">
+      <div class="vt-symbol">✂</div>
+      <div><h2>Công cụ Video phụ trợ</h2>
+        <p>Tải video nền riêng cho Audio hoặc cắt hàng loạt nhiều video. Không chạy viết truyện, TTS hay render.</p></div>
+      <span class="vt-independent">ĐỘC LẬP</span>
+    </header>
+    <nav class="vt-tabs">
+      <button id="vtTabDownload" onclick="setVideoToolsTab('download')">⇩ Tải video nền cho Audio</button>
+      <button id="vtTabCut" onclick="setVideoToolsTab('cut')">✂ Cắt video hàng loạt</button>
+    </nav>
+    <main id="videoToolsBody" class="vt-body"></main>
+  </div>
+</div>
+
+<!-- ============ CHẾ ĐỘ 4: KHO Ý TƯỞNG & KẾ HOẠCH ============ -->
+<div id="ideasMain" style="display:none">
+  <div class="idea-shell">
+    <header class="idea-head">
+      <div class="idea-symbol">◆</div>
+      <div><h2>Kho ý tưởng &amp; Kế hoạch YouTube</h2>
+        <p>Tìm và tải chuyện thật, phân tích đa tầng, duyệt thủ công rồi chuyển thẳng sang AI Story.</p></div>
+      <span class="idea-safe">TỰ LƯU SQLITE</span>
+    </header>
+    <nav class="idea-tabs">
+      <button id="ideaTabCollect" onclick="setIdeasTab('collect')">⌕ Tìm &amp; tải nội dung</button>
+      <button id="ideaTabLibrary" onclick="setIdeasTab('library')">▤ Kho đã tải &amp; phân tích <b id="ideaLibraryBadge">0</b></button>
+    </nav>
+    <div id="ideaStatus"></div>
+    <div id="ideaCollectView" class="idea-collect-view">
+      <aside class="idea-collect-form">
+        <section class="idea-source-box">
+          <div class="idea-box-title"><span>1</span><div><b>Tìm chuyện theo từ khóa</b><small>Kết quả thật từ website, không chèn dữ liệu mẫu.</small></div></div>
+          <label>Từ khóa Trung gợi ý</label>
+          <select id="ideaKeywordPreset" class="inp" onchange="ideasChooseKeyword(this.value)">
+            <option value="">— Chọn chủ đề hoặc tự gõ bên dưới —</option>
+          </select>
+          <label>Từ khóa tìm kiếm</label>
+          <input id="ideaOnlineKeyword" class="inp" placeholder="婆媳矛盾 故事" oninput="IDEAS.onlineKeyword=this.value">
+          <div id="ideaKeywordInfo" class="idea-keyword-info">Chọn một từ khóa để xem nghĩa và nhóm chủ đề.</div>
+          <div class="idea-collect-grid">
+            <div><label>Nguồn tìm</label><select id="ideaSourceGroup" class="inp" onchange="IDEAS.sourceGroup=this.value">
+              <option value="zhihu">Zhihu · truyện Trung (ưu tiên)</option>
+              <option value="chinese_real">Trung · tâm sự/người thật</option>
+              <option value="chinese_literary">Trung · văn học gia đình</option>
+              <option value="chinese_serial">Trung · truyện dài nhiều tập</option>
+              <option value="vietnam">Nguồn Việt Nam</option>
+              <option value="reddit">Reddit AITA</option>
+              <option value="chinese">Tất cả nguồn Trung phù hợp</option>
+              <option value="chinese_folklore">Trung · dân gian/kinh dị</option>
+              <option value="spiritual">Tâm linh · ông bà kể</option>
+              <option value="all">Tất cả nguồn phù hợp</option>
+            </select></div>
+            <div><label>Số kết quả</label><input id="ideaSearchLimit" class="inp" type="number" min="1" max="50" value="20"></div>
+          </div>
+          <button class="btn pri idea-main-action" onclick="ideasSearchSources()">⌕ TÌM NGUỒN NỘI DUNG</button>
+        </section>
+        <section class="idea-source-box compact">
+          <div class="idea-box-title"><span>2</span><div><b>Hoặc tải từ link cụ thể</b><small>Mỗi dòng một link nền tảng Trung, Reddit hoặc bài báo.</small></div></div>
+          <textarea id="ideaSourceUrls" class="inp" placeholder="https://www.zhihu.com/question/...&#10;https://www.qimao.com/shuku/..."></textarea>
+          <details class="idea-cookie-details"><summary>Cookie website nếu bài yêu cầu đăng nhập</summary>
+            <input id="ideaZhihuCookie" class="inp" type="password" autocomplete="off"
+              placeholder="Cookie chỉ dùng cho lượt tải này, không lưu cấu hình">
+          </details>
+          <button class="btn" onclick="ideasDownloadUrls()">⇩ Tải các link vào kho</button>
+        </section>
+        <p class="idea-copyright-note">Chỉ lấy tình huống làm tài liệu tham khảo. Phải đổi tên, bối cảnh và viết lại hoàn toàn; không đọc nguyên văn nguồn.</p>
+      </aside>
+      <main class="idea-source-results">
+        <header><div><h3>Kết quả tìm nguồn</h3><p id="ideaResultSummary">Chọn từ khóa và bấm Tìm nguồn nội dung.</p></div>
+          <div class="idea-result-actions"><button class="btn sm" onclick="ideasToggleAllSources(true)">Chọn tất cả</button>
+            <button class="btn sm" onclick="ideasToggleAllSources(false)">Bỏ chọn</button>
+            <button class="btn pri" onclick="ideasDownloadSelected()">⇩ Tải mục đã chọn vào kho</button></div></header>
+        <div id="ideaSourceResults" class="idea-source-list"></div>
+      </main>
+    </div>
+    <div id="ideaLibraryView" class="idea-library-view" style="display:none">
+      <div class="idea-toolbar">
+        <button class="btn pri" onclick="ideasImport()">＋ Nhập JSON / SQLite</button>
+        <button class="btn" onclick="ideasSample()">Dữ liệu mẫu kiểm thử</button>
+        <button class="btn" onclick="ideasSetVisibleSelection(true)">☑ Chọn mục đang lọc</button>
+        <button class="btn" onclick="ideasSetVisibleSelection(false)">☐ Bỏ chọn</button>
+        <select id="ideaProvider" class="inp" onchange="IDEAS.provider=this.value">
+          <option value="browser">Gemini Web · local, không API</option>
+          <option value="perplexity_browser">Claude · Perplexity Web, không API</option>
+          <option value="heuristic">Quy tắc local · không mở AI</option>
+        </select>
+        <select id="ideaUsageFilter" class="inp idea-usage-filter" onchange="ideasSetUsageFilter(this.value)">
+          <option value="unused">Chưa dùng · chống lặp</option>
+          <option value="used">Lịch sử đã dùng</option>
+          <option value="all">Tất cả nội dung</option>
+        </select>
+        <button class="btn" onclick="ideasAnalyze(false)">✦ Phân tích đã chọn</button>
+        <button class="btn" onclick="ideasAnalyze(true)">✦ Phân tích tất cả</button>
+        <button class="btn" onclick="ideasReloadSelected()">↻ Tải lại &amp; phân tích</button>
+        <button class="btn danger" onclick="ideasDeleteSelected()">🗑 Xóa đã chọn</button>
+        <span class="spacer"></span>
+        <button class="btn" onclick="ideasExport(false)">⇩ Xuất mục đã chọn</button>
+        <button class="btn" onclick="ideasExport(true)">⇩ Xuất toàn bộ</button>
+      </div>
+      <div class="idea-workspace">
+        <aside class="idea-list-pane">
+          <div class="idea-search"><input id="ideaSearch" placeholder="Lọc trong kho đã tải…"
+            oninput="ideasSearch(this.value)"><button id="ideaClearSearch" onclick="ideasClearSearch()" title="Xóa bộ lọc">×</button><b id="ideaCount">0 mục</b></div>
+          <div id="ideaList" class="idea-list"></div>
+        </aside>
+        <main id="ideaDetail" class="idea-detail"></main>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cài đặt dùng dữ liệu cấu hình/dự án hiện có, không tạo pipeline riêng -->
+<div id="settingsModal" class="modal-shell" aria-hidden="true" onclick="settingsBackdrop(event)">
+  <section class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <header class="settings-head">
+      <div class="settings-symbol">⚿</div>
+      <div><h2 id="settingsTitle">Cài Đặt Hệ Thống &amp; Cấu Hình AutoDub</h2>
+        <p>Tuỳ biến API dịch thuật AI, giọng đọc TTS và bộ tăng tốc GPU NVENC</p></div>
+      <button class="modal-close" onclick="closeSettings()" aria-label="Đóng">×</button>
+    </header>
+    <nav class="settings-tabs">
+      <button data-settings-tab="api" onclick="setSettingsTab('api')">◎ API Dịch &amp; AI</button>
+      <button data-settings-tab="voice" onclick="setSettingsTab('voice')">♬ Giọng Đọc &amp; Audio Ducking</button>
+      <button data-settings-tab="gpu" onclick="setSettingsTab('gpu')">▧ GPU NVENC &amp; Xuất Video</button>
+    </nav>
+    <div id="settingsBody" class="settings-body"></div>
+    <footer class="settings-foot"><button class="btn" onclick="closeSettings()">Đóng</button>
+      <button class="btn pri" onclick="saveSettingsModal()">Lưu cấu hình</button></footer>
+  </section>
+</div>
+
+<div id="toast"></div>
+
+<script src="/app.js"></script>
+</body>
+</html>

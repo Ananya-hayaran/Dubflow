@@ -1,0 +1,21 @@
+# DubFlow (English dubbing pipeline) - Python 3.10+
+# Install inside a virtual environment:   pip install -r requirements-dubflow.txt
+#
+# FFmpeg is NOT a pip package: install it separately and make sure `ffmpeg -version`
+# works in your terminal (Windows: https://www.gyan.dev/ffmpeg/builds/).
+
+# --- required ---
+yt-dlp>=2024.8.6        # YouTube download
+faster-whisper>=1.0.0   # speech-to-text (also pulls in ctranslate2)
+edge-tts>=6.1.9         # free English text-to-speech (needs internet)
+pyyaml>=6.0             # reads dubflow.yaml (optional file)
+requests>=2.31          # only used by the optional LLM translation providers
+
+# --- optional: free OFFLINE translation for NON-English videos ---
+# Not needed when the video is already English. Downloads a ~2.4 GB model on first use.
+#   pip install transformers sentencepiece torch
+# For an NVIDIA GPU install the CUDA build of torch from https://pytorch.org first.
+
+# --- optional: running the tests ---
+# The tests use only the standard library:   python -m unittest discover -s tests -v
+# (pytest also works if you prefer it.)

@@ -1,0 +1,49 @@
+# ============================================================================
+#  DubFlow configuration (English dubbing pipeline)
+#
+#  You do NOT need this file: every setting has a default. To customise, copy it
+#  to  dubflow.yaml  (same folder as main.py) and edit only what you need.
+# ============================================================================
+
+data_dir: data            # downloads, intermediate cache and outputs live here
+ffmpeg_dir: ''            # folder holding ffmpeg/ffprobe if they are not on PATH
+
+download:
+  quality: '720'          # best | 1080 | 720 | 480 | 360
+  prefer_h264: true       # H.264 lets the final render COPY the video (no re-encode)
+  cookies_from_browser: null   # e.g. chrome  (only for age/login-restricted videos)
+
+asr:                      # speech-to-text (Faster-Whisper)
+  model_size: small       # tiny | base | small | medium | large-v3
+  language: null          # null = auto-detect; or e.g. es, hi, ta, ja
+  device: auto            # auto = CUDA if available, else CPU
+  compute_type: auto      # auto = float16 on CUDA, int8 on CPU
+
+translation:
+  # local       FREE, offline model (NLLB-200). Needs: pip install transformers sentencepiece torch
+  # passthrough no translation (used automatically when the video is already English)
+  # gemini | nvidia | tokenrouter | inferx | zenmux   optional LLM APIs (need your own key)
+  provider: local
+  local_model: auto       # auto = facebook/nllb-200-distilled-600M, or any Hugging Face model id
+  chars_per_sec: 15.0     # speaking rate used to budget translation length
+  api: {}                 # e.g.  api: { gemini_api_key: "...", gemini_model: "..." }
+
+tts:                      # English text-to-speech (edge-tts, free, needs internet)
+  voice: en-US-AriaNeural         # one consistent voice for the whole video
+  fallback_voice: en-US-GuyNeural # used only if a line fails with the main voice
+  rate: '+0%'
+  pitch: '+0Hz'
+  concurrency: 6
+
+alignment:                # fitting English speech into the original timing
+  # Speed limits default to 0.85x .. 1.25x with a 5% tolerance (see alignment.py).
+  max_overhang_seconds: 0.0       # 0 = a clip must fit its own [start, end] window
+  stretch_short_segments: false   # true = slow very short clips a little (never below 0.85x)
+
+mix:
+  sample_rate: 48000
+  chunk_seconds: 120      # long videos are mixed in windows, never loaded into RAM
+
+render:
+  keep_original_db: null  # null = English dub only. e.g. -25 keeps the original quietly
+  force_h264: true        # re-encode ONLY when the source is not H.264
